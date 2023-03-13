@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:instagram_clone/service/auth_service.dart';
 
 import '../model/post_model.dart';
 
@@ -63,7 +64,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
           actions: [
             IconButton(
               onPressed: () {
-
+                AuthService.signOutUser(context);
               },
               icon: Icon(Icons.exit_to_app),
               color: Color.fromRGBO(193, 53, 132, 1),
@@ -237,6 +238,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
 
                   //list or grid
                   Container(
+                    height: 50,
                     child: Row(
                       children: [
                         Expanded(
