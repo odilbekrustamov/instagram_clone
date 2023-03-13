@@ -3,9 +3,13 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:instagram_clone/model/member_model.dart';
 import 'package:instagram_clone/service/auth_service.dart';
+import 'package:instagram_clone/service/db_service.dart';
+import 'package:instagram_clone/service/file_service.dart';
 
 import '../model/post_model.dart';
+import '../service/log_service.dart';
 
 class MyProfilePage extends StatefulWidget {
   static final String id = "myprofile_page";
@@ -18,7 +22,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
   bool isLoading = false;
   int axisCount = 1;
   List<Post> items = [];
-  String fullname = "Odilbek Rustamov", email = "odilbekrustamov1215@gmail.com", img_url = "";
+  String fullname = "", email = "", img_url = "";
   final ImagePicker _picker = ImagePicker();
   File? _image;
   int count_posts = 0, count_followers = 0, count_following = 0;
@@ -27,19 +31,12 @@ class _MyProfilePageState extends State<MyProfilePage> {
   String image_2 = "https://i.pinimg.com/564x/bd/13/af/bd13af840b16653e09ca8d2fdba4d98f.jpg";
   String image_3 = "https://images.unsplash.com/photo-1532974297617-c0f05fe48bff";
 
-  @override
-  void initState() {
-    super.initState();
-    items.add(Post(image_1, "-Audi is the ultimate example of dynamics, sportiness, and energy."));
-    items.add(Post(image_2, "The new Audi A8 is more advanced and complex than a brain surgeon’s tools, making life easier. Visit us now to schedule your test drive!"));
-    items.add(Post(image_3, "Everyone’s got a story. But we all live on the same planet. why not keep it clean? I don’t just love #audi. I live it."));
-  }
-
   _imgFromGallary()async{
     XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
     setState(() {
       _image = File(image!.path);
     });
+    _apiChangePhoto();
   }
 
   _imgFromCamers()async{
@@ -47,6 +44,54 @@ class _MyProfilePageState extends State<MyProfilePage> {
     setState(() {
       _image = File(image!.path);
     });
+    _apiChangePhoto();
+  }
+
+  void _apiLoadMember(){
+    setState(() {
+      isLoading = true;
+    });
+    LogService.e("member.toString()");
+    DBService.loadMember().then((value) => {
+    LogService.e(value.toString()),
+      _showMemberInfo(value),
+    });
+  }
+
+  void _showMemberInfo(Member member){
+    LogService.e(member.fullname);
+    setState(() {
+      isLoading = false;
+      this.fullname = member.fullname;
+      this.email = member.email;
+      this.img_url = member.img_url;
+    });
+  }
+
+  void _apiChangePhoto(){
+    if(_image == null) return;
+    setState(() {
+      isLoading = true;
+    });
+    FileService.uploadUserImage(_image!).then((downloadUrl) => {
+      _apiUpdateUser(downloadUrl),
+    });
+  }
+
+  _apiUpdateUser(String downloadUrl) async {
+    LogService.e(downloadUrl);
+    Member member = await DBService.loadMember();
+    member.img_url = downloadUrl;
+    await DBService.updateMember(member);
+    _apiLoadMember();
+  }
+  @override
+  void initState() {
+    super.initState();
+    items.add(Post(image_1, "-Audi is the ultimate example of dynamics, sportiness, and energy."));
+    items.add(Post(image_2, "The new Audi A8 is more advanced and complex than a brain surgeon’s tools, making life easier. Visit us now to schedule your test drive!"));
+    items.add(Post(image_3, "Everyone’s got a story. But we all live on the same planet. why not keep it clean? I don’t just love #audi. I live it."));
+    _apiLoadMember();
   }
 
   @override
@@ -96,7 +141,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(35),
-                              child: _image == null
+                              child: img_url == null || img_url.isEmpty
                                   ? Image(
                                 image: AssetImage(
                                     "assets/images/ic_person.png"),
@@ -104,8 +149,8 @@ class _MyProfilePageState extends State<MyProfilePage> {
                                 height: 70,
                                 fit: BoxFit.cover,
                               )
-                                  : Image.file(
-                                _image!,
+                                  : Image.network(
+                                img_url,
                                 width: 70,
                                 height: 70,
                                 fit: BoxFit.cover,

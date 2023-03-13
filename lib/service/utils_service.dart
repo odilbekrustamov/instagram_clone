@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:motion_toast/motion_toast.dart';
 import 'package:motion_toast/resources/arrays.dart';
+import 'package:platform_device_id/platform_device_id.dart';
 
 class Utils {
 
@@ -22,6 +25,27 @@ class Utils {
       animationDuration: const Duration(milliseconds: 1000),
       dismissable: false,
     ).show(context);
+  }
+
+  static Future<Map<String, String>> deviceParams() async {
+    Map<String, String> params = {};
+    var getDeviceId = await PlatformDeviceId.getDeviceId;
+    String fcmToken = ""; //await Prefs.loadFCM();
+
+    if (Platform.isIOS) {
+      params.addAll({
+        'device_id': getDeviceId!,
+        'device_type': "I",
+        'device_token': fcmToken,
+      });
+    } else {
+      params.addAll({
+        'device_id': getDeviceId!,
+        'device_type': "A",
+        'device_token': fcmToken,
+      });
+    }
+    return params;
   }
 
 }

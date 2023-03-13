@@ -27,7 +27,7 @@ class _SignInPageState extends State<SignInPage> {
     if(email.isEmpty && password.isEmpty){
       Utils.showToast("Please enter your email and password", context);
       return ;
-    }else if(email.isEmpty && RegExp(r'^.+@[a-zA-Z]+\.{1}[a-zA-Z]+(\.{0,1}[a-zA-Z]+)$').hasMatch(email)){
+    }else if(email.isEmpty){
       Utils.showToast("Please enter your email", context);
       return ;
     }else if(password.isEmpty){

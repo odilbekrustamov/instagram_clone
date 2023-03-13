@@ -17,7 +17,12 @@ dependencies:
   eva_icons_flutter: ^3.1.0
   firebase_core: ^2.7.1
   firebase_auth: ^4.2.10
-  email_validator: ^2.1.17
+  cloud_firestore: ^4.4.4
+  firebase_storage: ^11.0.15
+  platform_device_id: ^1.0.1
+  logger: ^1.2.2
+
+
 
 
 dev_dependencies:

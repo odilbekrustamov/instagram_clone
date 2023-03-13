@@ -1,9 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:instagram_clone/model/member_model.dart';
 import 'package:instagram_clone/pages/home_page.dart';
 import 'package:instagram_clone/pages/signin_page.dart';
 import 'package:instagram_clone/service/auth_service.dart';
 
+import '../service/db_service.dart';
 import '../service/utils_service.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -20,7 +22,7 @@ class _SignUpPageState extends State<SignUpPage> {
   var passwordController = TextEditingController();
   var cpasswordController = TextEditingController();
 
-  _doSignUp(){
+  _doSignUp()async{
     String fullName = fullNameController.text.toString();
     String email = emailController.text.toString();
     String password = passwordController.text.toString();
@@ -46,18 +48,18 @@ class _SignUpPageState extends State<SignUpPage> {
     setState(() {
       isLoading = true;
     });
-    AuthService.signUpUser(email, password).then((value) => {
-       Utils.showToast("okkey", context),
-      responseSignUp(value!),
+    var response = await AuthService.signUpUser(email, password);
+    Member member = Member(fullName, email);
+    DBService.storeMember(member).then((value) => {
+      storeMemberToDB(member),
     });
   }
 
-  responseSignUp(User firebaseUser){
+  void storeMemberToDB(Member member) {
     setState(() {
       isLoading = false;
     });
     Navigator.pushReplacementNamed(context, HomePage.id);
-
   }
 
   _callSignInPage(){
