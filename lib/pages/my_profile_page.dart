@@ -27,10 +27,6 @@ class _MyProfilePageState extends State<MyProfilePage> {
   File? _image;
   int count_posts = 0, count_followers = 0, count_following = 0;
 
-  String image_1 = "https://images.unsplash.com/photo-1561924563-d9ad0f32b23f";
-  String image_2 = "https://i.pinimg.com/564x/bd/13/af/bd13af840b16653e09ca8d2fdba4d98f.jpg";
-  String image_3 = "https://images.unsplash.com/photo-1532974297617-c0f05fe48bff";
-
   _imgFromGallary()async{
     XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
     setState(() {
@@ -78,6 +74,19 @@ class _MyProfilePageState extends State<MyProfilePage> {
     });
   }
 
+  _apiLoadPosts(){
+    DBService.loadPosts().then((value) => {
+      _resLoadPosts(value),
+    });
+  }
+
+  _resLoadPosts(List<Post> posts){
+    setState(() {
+      items = posts;
+      count_posts = posts.length;
+    });
+  }
+
   _apiUpdateUser(String downloadUrl) async {
     LogService.e(downloadUrl);
     Member member = await DBService.loadMember();
@@ -88,10 +97,8 @@ class _MyProfilePageState extends State<MyProfilePage> {
   @override
   void initState() {
     super.initState();
-    items.add(Post(image_1, "-Audi is the ultimate example of dynamics, sportiness, and energy."));
-    items.add(Post(image_2, "The new Audi A8 is more advanced and complex than a brain surgeon’s tools, making life easier. Visit us now to schedule your test drive!"));
-    items.add(Post(image_3, "Everyone’s got a story. But we all live on the same planet. why not keep it clean? I don’t just love #audi. I live it."));
     _apiLoadMember();
+    _apiLoadPosts();
   }
 
   @override
@@ -172,11 +179,12 @@ class _MyProfilePageState extends State<MyProfilePage> {
                             ),
                           ),
                         ],
-                      )),
+                      )
+                  ),
 
                   //#myinfos
                   SizedBox(
-                    height: 10,
+                    height: 5,
                   ),
                   Text(
                     fullname.toUpperCase(),
@@ -199,7 +207,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                   //#mycounts
                   Container(
                     margin: EdgeInsets.only(top: 10),
-                    height: 80,
+                    height: 50,
                     child: Row(
                       children: [
                         Expanded(
