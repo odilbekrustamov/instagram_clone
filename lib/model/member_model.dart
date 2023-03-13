@@ -8,10 +8,10 @@ class Member {
   String device_id = "";
   String device_type = "";
   String device_token = "";
-  //
-  // bool followed = false;
-  // int followers_count = 0;
-  // int   = 0;
+
+  bool followed = false;
+  int followers_count = 0;
+  int following_count = 0;
 
   Member(this.fullname, this.email);
 
@@ -23,8 +23,7 @@ class Member {
         img_url = json['img_url'],
         device_id = json['device_id'],
         device_type = json['device_type'],
-        device_token = json['device_token']
-  ;
+        device_token = json['device_token'];
 
   Map<String, dynamic> toJson() => {
     'uid': uid,

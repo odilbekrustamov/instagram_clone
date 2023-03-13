@@ -36,6 +36,21 @@ class DBService {
     String uid = AuthService.currentUserId();
     var value = await _firestore.collection(folder_users).doc(uid).get();
     Member member = Member.fromJson(value.data()!);
+
+    var querySnapshot1 = await _firestore
+        .collection(folder_users)
+        .doc(uid)
+        .collection(folder_followers)
+        .get();
+    member.followers_count = querySnapshot1.docs.length;
+
+    var querySnapshot2 = await _firestore
+        .collection(folder_users)
+        .doc(uid)
+        .collection(folder_following)
+        .get();
+    member.following_count = querySnapshot2.docs.length;
+
     return member;
   }
 
@@ -135,4 +150,135 @@ class DBService {
 
     return posts;
   }
+
+  static Future likePost(Post post, bool liked) async {
+    String uid = AuthService.currentUserId();
+    post.liked = liked;
+
+    await _firestore
+        .collection(folder_users)
+        .doc(uid)
+        .collection(folder_feeds)
+        .doc(post.id)
+        .set(post.toJson());
+
+    if (uid == post.uid) {
+      await _firestore
+          .collection(folder_users)
+          .doc(uid)
+          .collection(folder_feeds)
+          .doc(post.id)
+          .set(post.toJson());
+    }
+  }
+
+  static Future<List<Post>> loadLikes() async {
+    String uid = AuthService.currentUserId();
+    List<Post> posts = [];
+
+    var quarySnapshot = await _firestore
+        .collection(folder_users)
+        .doc(uid)
+        .collection(folder_feeds)
+        .where("liked", isEqualTo: true)
+        .get();
+
+    quarySnapshot.docs.forEach((element) {
+      Post post = Post.fromJson(element.data());
+      if (post.uid == uid) post.mine = true;
+      posts.add(post);
+    });
+
+    return posts;
+  }
+
+  static Future<Member> followMember(Member someone) async {
+    Member me = await loadMember();
+
+    //I followed to someone
+    await _firestore
+        .collection(folder_users)
+        .doc(me.uid)
+        .collection(folder_following)
+        .doc(someone.uid)
+        .set(someone.toJson());
+    //I am in someone's followers
+    await _firestore
+        .collection(folder_users)
+        .doc(someone.uid)
+        .collection(folder_followers)
+        .doc(me.uid)
+        .set(me.toJson());
+
+    return someone;
+  }
+
+  static Future<Member> unfollowMember(Member someone) async {
+    Member me = await loadMember();
+
+    //I un followed to someone
+    await _firestore
+        .collection(folder_users)
+        .doc(me.uid)
+        .collection(folder_following)
+        .doc(someone.uid)
+        .delete();
+    //I am not in someone's followers
+    await _firestore
+        .collection(folder_users)
+        .doc(someone.uid)
+        .collection(folder_followers)
+        .doc(me.uid)
+        .delete();
+
+    return someone;
+  }
+
+  static Future storePostsToMyFeed(Member someone) async {
+    List<Post> posts = [];
+    var quarySnapshot = await _firestore
+        .collection(folder_users)
+        .doc(someone.uid)
+        .collection(folder_posts)
+        .get();
+
+    quarySnapshot.docs.forEach((element) {
+      var post = Post.fromJson(element.data());
+      post.liked = false;
+      posts.add(post);
+    });
+
+    for(Post post in posts){
+      storeFeed((post));
+    }
+  }
+
+  static Future removePostsFromMyFeed(Member someone) async {
+    List<Post> posts = [];
+    var querySnapshot = await _firestore
+        .collection(folder_users)
+        .doc(someone.uid)
+        .collection(folder_posts)
+        .get();
+
+    querySnapshot.docs.forEach((result) {
+      posts.add(Post.fromJson(result.data()));
+    });
+
+    for (Post post in posts) {
+      removeFeed(post);
+    }
+  }
+
+  static Future removeFeed(Post post) async {
+    String uid = AuthService.currentUserId();
+
+    return await _firestore
+        .collection(folder_users)
+        .doc(uid)
+        .collection(folder_feeds)
+        .doc(post.id)
+        .delete();
+  }
+
 }
