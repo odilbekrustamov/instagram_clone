@@ -1,9 +1,13 @@
 import 'dart:async';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram_clone/pages/home_page.dart';
 import 'package:instagram_clone/pages/signin_page.dart';
 import 'package:instagram_clone/service/auth_service.dart';
+
+import '../service/log_service.dart';
+import '../service/prefs_service.dart';
 
 class SplashPage extends StatefulWidget {
   static final String id = "splash_page";
@@ -14,10 +18,49 @@ class SplashPage extends StatefulWidget {
 
 class _SplashPageState extends State<SplashPage> {
 
+  static final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
   @override
   void initState() {
     super.initState();
     _initTime();
+    _initNotification();
+  }
+
+  _initNotification() async{
+    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    if(settings.authorizationStatus == AuthorizationStatus.authorized){
+      LogService.d('User granted permission');
+    }else{
+      LogService.d('User declined or has not accepted permission');
+    }
+
+    _firebaseMessaging.getToken().then((value) async{
+      String fcmToken = value.toString();
+      Prefs.saveFCM(fcmToken);
+      String token = await Prefs.loadFCM();
+     LogService.i("FCM Token: ${token}");
+    });
+
+    LogService.e("rfetrg4gr4");
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      String title = message.notification!.title.toString();
+      String body = message.notification!.body.toString();
+      LogService.i(title);
+      LogService.i(body);
+      LogService.i(message.data.toString());
+      //
+    });
   }
 
   _initTime(){
