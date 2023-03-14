@@ -3,6 +3,8 @@ import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram_clone/model/post_model.dart';
 import 'package:instagram_clone/service/db_service.dart';
+import 'package:instagram_clone/service/log_service.dart';
+import 'package:instagram_clone/service/utils_service.dart';
 
 class MyFeedPage extends StatefulWidget {
   static final String id = "myfeed_page";
@@ -34,18 +36,30 @@ class _MyFeedPageState extends State<MyFeedPage> {
     });
   }
 
-  _apiPostLike(Post post)async{
+  _apiPostLike(Post post) async {
     setState(() {
       post.liked = true;
     });
     await DBService.likePost(post, true);
   }
 
-  _apiPostUnLike(Post post)async{
+  _apiPostUnLike(Post post) async {
     setState(() {
       post.liked = false;
     });
     await DBService.likePost(post, false);
+  }
+
+  _dialogRemovePost(Post post)async{
+    var resualt = await Utils.dialogCommon(context, "Insta Clone", "Do you want to detele this post?", false);
+    if(resualt != null && resualt){
+      setState(() {
+        isLoading = true;
+      });
+    }
+    DBService.removePost(post).then((value) => {
+      _apiLoadFeeds(),
+    });
   }
 
   @override
@@ -99,6 +113,8 @@ class _MyFeedPageState extends State<MyFeedPage> {
   }
 
   Widget _itemOfPost(Post post) {
+    LogService.e(post.img_user);
+    LogService.e(post.fullname);
     return Container(
       color: Colors.white,
       child: Column(
@@ -150,7 +166,13 @@ class _MyFeedPageState extends State<MyFeedPage> {
                     )
                   ],
                 ),
-                IconButton(onPressed: () {}, icon: Icon(Icons.more_horiz))
+                post.mine
+                    ? IconButton(
+                        onPressed: () {
+                          _dialogRemovePost(post);
+                        },
+                        icon: Icon(Icons.more_horiz))
+                    : SizedBox.shrink()
               ],
             ),
           ),
@@ -186,9 +208,9 @@ class _MyFeedPageState extends State<MyFeedPage> {
                 children: [
                   IconButton(
                       onPressed: () {
-                        if(!post.liked){
+                        if (!post.liked) {
                           _apiPostLike(post);
-                        }else{
+                        } else {
                           _apiPostUnLike(post);
                         }
                       },

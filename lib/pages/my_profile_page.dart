@@ -10,6 +10,7 @@ import 'package:instagram_clone/service/file_service.dart';
 
 import '../model/post_model.dart';
 import '../service/log_service.dart';
+import '../service/utils_service.dart';
 
 class MyProfilePage extends StatefulWidget {
   static final String id = "myprofile_page";
@@ -27,34 +28,36 @@ class _MyProfilePageState extends State<MyProfilePage> {
   File? _image;
   int count_posts = 0, count_followers = 0, count_following = 0;
 
-  _imgFromGallary()async{
-    XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
+  _imgFromGallary() async {
+    XFile? image =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
     setState(() {
       _image = File(image!.path);
     });
     _apiChangePhoto();
   }
 
-  _imgFromCamers()async{
-    XFile? image = await _picker.pickImage(source: ImageSource.camera, imageQuality: 50);
+  _imgFromCamers() async {
+    XFile? image =
+        await _picker.pickImage(source: ImageSource.camera, imageQuality: 50);
     setState(() {
       _image = File(image!.path);
     });
     _apiChangePhoto();
   }
 
-  void _apiLoadMember(){
+  void _apiLoadMember() {
     setState(() {
       isLoading = true;
     });
     LogService.e("member.toString()");
     DBService.loadMember().then((value) => {
-    LogService.e(value.toString()),
-      _showMemberInfo(value),
-    });
+          LogService.e(value.toString()),
+          _showMemberInfo(value),
+        });
   }
 
-  void _showMemberInfo(Member member){
+  void _showMemberInfo(Member member) {
     LogService.e(member.fullname);
     setState(() {
       isLoading = false;
@@ -66,23 +69,23 @@ class _MyProfilePageState extends State<MyProfilePage> {
     });
   }
 
-  void _apiChangePhoto(){
-    if(_image == null) return;
+  void _apiChangePhoto() {
+    if (_image == null) return;
     setState(() {
       isLoading = true;
     });
     FileService.uploadUserImage(_image!).then((downloadUrl) => {
-      _apiUpdateUser(downloadUrl),
-    });
+          _apiUpdateUser(downloadUrl),
+        });
   }
 
-  _apiLoadPosts(){
+  _apiLoadPosts() {
     DBService.loadPosts().then((value) => {
-      _resLoadPosts(value),
-    });
+          _resLoadPosts(value),
+        });
   }
 
-  _resLoadPosts(List<Post> posts){
+  _resLoadPosts(List<Post> posts) {
     setState(() {
       items = posts;
       count_posts = posts.length;
@@ -96,6 +99,20 @@ class _MyProfilePageState extends State<MyProfilePage> {
     await DBService.updateMember(member);
     _apiLoadMember();
   }
+
+  _dialogRemovePost(Post post) async {
+    var resualt = await Utils.dialogCommon(
+        context, "Insta Clone", "Do you want to detele this post?", false);
+    if (resualt != null && resualt) {
+      setState(() {
+        isLoading = true;
+      });
+    }
+    DBService.removePost(post).then((value) => {
+      _apiLoadPosts(),
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -152,18 +169,18 @@ class _MyProfilePageState extends State<MyProfilePage> {
                               borderRadius: BorderRadius.circular(35),
                               child: img_url == null || img_url.isEmpty
                                   ? Image(
-                                image: AssetImage(
-                                    "assets/images/ic_person.png"),
-                                width: 70,
-                                height: 70,
-                                fit: BoxFit.cover,
-                              )
+                                      image: AssetImage(
+                                          "assets/images/ic_person.png"),
+                                      width: 70,
+                                      height: 70,
+                                      fit: BoxFit.cover,
+                                    )
                                   : Image.network(
-                                img_url,
-                                width: 70,
-                                height: 70,
-                                fit: BoxFit.cover,
-                              ),
+                                      img_url,
+                                      width: 70,
+                                      height: 70,
+                                      fit: BoxFit.cover,
+                                    ),
                             ),
                           ),
                           Container(
@@ -181,8 +198,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                             ),
                           ),
                         ],
-                      )
-                  ),
+                      )),
 
                   //#myinfos
                   SizedBox(
@@ -342,60 +358,59 @@ class _MyProfilePageState extends State<MyProfilePage> {
         ));
   }
 
-  Widget _itemOfPost(Post post){
-    return Container(
-      margin: EdgeInsets.all(5),
-      child: Column(
-        children: [
-          Expanded(
-            child: CachedNetworkImage(
-              width: double.infinity,
-              imageUrl: post.img_post,
-              placeholder: (contex, url) => Center(
-                child: CircularProgressIndicator(),
+  Widget _itemOfPost(Post post) {
+    return GestureDetector(
+      onLongPress: () {
+        _dialogRemovePost(post);
+      },
+      child: Container(
+        margin: EdgeInsets.all(5),
+        child: Column(
+          children: [
+            Expanded(
+              child: CachedNetworkImage(
+                width: double.infinity,
+                imageUrl: post.img_post,
+                placeholder: (contex, url) => Center(
+                  child: CircularProgressIndicator(),
+                ),
+                errorWidget: (context, url, errorr) => Icon(Icons.error),
+                fit: BoxFit.cover,
               ),
-              errorWidget: (context, url, errorr) => Icon(Icons.error),
-              fit: BoxFit.cover,
             ),
-          ),
-          SizedBox(height: 3,),
-          Text(
-            post.caption,
-            style: TextStyle(color: Colors.black87.withOpacity(0.7)),
-            maxLines: 2,
-          )
-        ],
+            SizedBox(
+              height: 3,
+            ),
+            Text(
+              post.caption,
+              style: TextStyle(color: Colors.black87.withOpacity(0.7)),
+              maxLines: 2,
+            )
+          ],
+        ),
       ),
     );
   }
 
-  void _settingModalBottomSheet(context){
+  void _settingModalBottomSheet(context) {
     showModalBottomSheet(
         context: context,
-        builder: (BuildContext bc){
+        builder: (BuildContext bc) {
           return Container(
             child: new Wrap(
               children: <Widget>[
                 new ListTile(
                     leading: new Icon(Icons.photo_library),
                     title: new Text('Pick Photo'),
-                    onTap: () => {
-                      _imgFromGallary(),
-                      Navigator.pop(context)
-                    }
-                ),
+                    onTap: () => {_imgFromGallary(), Navigator.pop(context)}),
                 new ListTile(
                   leading: new Icon(Icons.camera_alt),
                   title: new Text('Take Photo'),
-                  onTap: () => {
-                    _imgFromCamers(),
-                    Navigator.pop(context)
-                  },
+                  onTap: () => {_imgFromCamers(), Navigator.pop(context)},
                 ),
               ],
             ),
           );
-        }
-    );
+        });
   }
 }

@@ -109,7 +109,6 @@ class DBService {
 
   static Future<Post> storeFeed(Post post) async {
     String uid = AuthService.currentUserId();
-
     await _firestore
         .collection(folder_users)
         .doc(uid)
@@ -122,30 +121,32 @@ class DBService {
   static Future<List<Post>> loadPosts() async {
     List<Post> posts = [];
     String uid = AuthService.currentUserId();
-    var quareSnapshot = await _firestore
+
+    var querySnapshot = await _firestore
         .collection(folder_users)
         .doc(uid)
         .collection(folder_posts)
         .get();
 
-    quareSnapshot.docs.forEach((result) {
+    querySnapshot.docs.forEach((result) {
       posts.add(Post.fromJson(result.data()));
     });
-
     return posts;
   }
 
   static Future<List<Post>> loadFeeds() async {
     List<Post> posts = [];
     String uid = AuthService.currentUserId();
-    var quareSnapshot = await _firestore
+    var querySnapshot = await _firestore
         .collection(folder_users)
         .doc(uid)
         .collection(folder_feeds)
         .get();
 
-    quareSnapshot.docs.forEach((result) {
-      posts.add(Post.fromJson(result.data()));
+    querySnapshot.docs.forEach((result) {
+      Post post = Post.fromJson(result.data());
+      if (post.uid == uid) post.mine = true;
+      posts.add(post);
     });
 
     return posts;
@@ -195,14 +196,15 @@ class DBService {
   static Future<Member> followMember(Member someone) async {
     Member me = await loadMember();
 
-    //I followed to someone
+    // I followed to someone
     await _firestore
         .collection(folder_users)
         .doc(me.uid)
         .collection(folder_following)
         .doc(someone.uid)
         .set(someone.toJson());
-    //I am in someone's followers
+
+    // I am in someone`s followers
     await _firestore
         .collection(folder_users)
         .doc(someone.uid)
@@ -216,14 +218,15 @@ class DBService {
   static Future<Member> unfollowMember(Member someone) async {
     Member me = await loadMember();
 
-    //I un followed to someone
+    // I un followed to someone
     await _firestore
         .collection(folder_users)
         .doc(me.uid)
         .collection(folder_following)
         .doc(someone.uid)
         .delete();
-    //I am not in someone's followers
+
+    // I am not in someone`s followers
     await _firestore
         .collection(folder_users)
         .doc(someone.uid)
@@ -248,7 +251,7 @@ class DBService {
       posts.add(post);
     });
 
-    for(Post post in posts){
+    for (Post post in posts) {
       storeFeed((post));
     }
   }
@@ -281,4 +284,16 @@ class DBService {
         .delete();
   }
 
+  static Future removePost(Post post) async {
+    String uid = AuthService.currentUserId();
+
+    await removeFeed(post);
+
+    return await _firestore
+        .collection(folder_users)
+        .doc(uid)
+        .collection(folder_posts)
+        .doc(post.id)
+        .delete();
+  }
 }

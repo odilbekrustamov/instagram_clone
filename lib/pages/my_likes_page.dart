@@ -3,6 +3,7 @@ import 'package:eva_icons_flutter/eva_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:instagram_clone/model/member_model.dart';
 import 'package:instagram_clone/service/db_service.dart';
+import 'package:instagram_clone/service/utils_service.dart';
 
 import '../model/post_model.dart';
 
@@ -40,6 +41,19 @@ class _MyLikesPageState extends State<MyLikesPage> {
     await DBService.likePost(post, false).then((value) => {
           apiLoadLikes(),
         });
+  }
+
+  _dialogRemovePost(Post post) async {
+    var resualt = await Utils.dialogCommon(
+        context, "Insta Clone", "Do you want to detele this post?", false);
+    if (resualt != null && resualt) {
+      setState(() {
+        isLoading = true;
+      });
+    }
+    DBService.removePost(post).then((value) => {
+      apiLoadLikes(),
+    });
   }
 
   @override
@@ -132,7 +146,13 @@ class _MyLikesPageState extends State<MyLikesPage> {
                     )
                   ],
                 ),
-                IconButton(onPressed: () {}, icon: Icon(Icons.more_horiz))
+                post.mine
+                    ? IconButton(
+                        onPressed: () {
+                          _dialogRemovePost(post);
+                        },
+                        icon: Icon(Icons.more_horiz))
+                    : SizedBox.shrink()
               ],
             ),
           ),

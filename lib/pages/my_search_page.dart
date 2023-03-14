@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:instagram_clone/model/member_model.dart';
 import 'package:instagram_clone/service/db_service.dart';
+import 'package:instagram_clone/service/log_service.dart';
 
 class MySearchPage extends StatefulWidget {
   static final String id = "mysearch_page";
@@ -123,6 +124,7 @@ class _MySearchPageState extends State<MySearchPage> {
   }
 
   Widget _itemOfMember(Member member) {
+    LogService.e(member.followed.toString());
     return Container(
       height: 90,
       child: Row(
